@@ -3,7 +3,7 @@ import _pickle as pickle
 
 class simple_rnn:
 
-    def __init__(self, file_name, input_dim):
+    def __init__(self, input_dim = 1):
         '''
         try:
             with open(file_name, 'rb') as f:
@@ -11,6 +11,7 @@ class simple_rnn:
             for key, val in params
         except:
         '''
+        self.params = {}
 
         self.params['W1'] = np.random.randn(input_dim)
         self.params['b1'] = np.zeros(input_dim)
@@ -25,26 +26,37 @@ class simple_rnn:
 
         self.time = 0
 
-    def foward(self, x):
+    def forward(self, x):
         self.col = np.sum(self.NNs(x, 'W1', 'b1'))
 
         if self.time == 0:
             self.undercol = 0
+            self.unundercol = 0
         else:
+            self.unundercol = self.undercol
             self.col += np.sum(self.undercol * self.params['exW'] -self.params['exb'])
 
         self.col = self.sigmoid(self.col)
         self.undercol = self.col  # before out
 
         self.col = np.sum(self.NNs(self.col, 'W2', 'b2'))
-        return self.softmax(self.col)
 
-    def backward(self, d):
-        self.params['W2'] -= 0.01 *
+        out = self.col / 30
+        #活性化関数エラー
+        return out
 
-    def softmax(self, x):
-        x -= np.max(x)
-        return np.exp(x) / np.sum(np.exp(x))
+    def backward(self, d, x):
+        self.params['W2'] -= 0.0001 * np.sum(d * self.undercol)
+        self.params['W1'] -= 0.0001 * np.sum(d * x)
+
+        if self.time != 0:
+            self.params['exW'] -= 0.0001 * np.sum(d * self.unundercol)
+
+        self.time += 1
+
+    def softmax(self, x): #crazy
+        #print(x.shape)
+        return np.sum(x)/x.shape
 
     def NNs(self, x, keys, key):
         x = x * self.params[keys] - self.params[key]
